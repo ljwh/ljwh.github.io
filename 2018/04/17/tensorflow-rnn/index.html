@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="本文将基于tensorflow r1.5的源码，从组成RNN的细胞开始，到如何构建一个RNN，学习这整个的流程。 rnn_cell的接口声明 tensorflow在tensorflow/python/ops/rnn_cell.py中声明了一个RNNCell基类和几个基本的RNN cell类,这些类的实现在tensorflow/python/ops/rnn_cell_impl.py中。接下来，我们具">
+<meta name="keywords" content="RNN,Tensorflow,源码解析">
+<meta property="og:type" content="article">
+<meta property="og:title" content="RNN 源码解析（tensorflow）">
+<meta property="og:url" content="http://jeremyliu.org/2018/04/17/tensorflow-rnn/index.html">
+<meta property="og:site_name" content="LJWH">
+<meta property="og:description" content="本文将基于tensorflow r1.5的源码，从组成RNN的细胞开始，到如何构建一个RNN，学习这整个的流程。 rnn_cell的接口声明 tensorflow在tensorflow/python/ops/rnn_cell.py中声明了一个RNNCell基类和几个基本的RNN cell类,这些类的实现在tensorflow/python/ops/rnn_cell_impl.py中。接下来，我们具">
+<meta property="og:locale" content="default">
+<meta property="og:updated_time" content="2018-05-14T16:05:41.063Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="RNN 源码解析（tensorflow）">
+<meta name="twitter:description" content="本文将基于tensorflow r1.5的源码，从组成RNN的细胞开始，到如何构建一个RNN，学习这整个的流程。 rnn_cell的接口声明 tensorflow在tensorflow/python/ops/rnn_cell.py中声明了一个RNNCell基类和几个基本的RNN cell类,这些类的实现在tensorflow/python/ops/rnn_cell_impl.py中。接下来，我们具">
+    
+    
+        
+          
+              <link rel="shortcut icon" href="/images/favicon.ico">
+          
+        
+        
+          
+            <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+          
+        
+        
+          
+            <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+          
+        
+    
+    <!-- title -->
+    <title>RNN 源码解析（tensorflow）</title>
+    <!-- styles -->
+    <link rel="stylesheet" href="/css/style.css">
+    <!-- persian styles -->
+    
+      <link rel="stylesheet" href="/css/rtl.css">
+    
+    <!-- rss -->
+    
+    
+</head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fas fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+         
+          <li><a href="/">主页</a></li>
+         
+          <li><a href="/archives/">博客</a></li>
+         
+          <li><a href="/about/">关于</a></li>
+         
+          <li><a href="http://github.com/ljwh">GitHub</a></li>
+        
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        
+        <li><a class="icon" href="/2017/12/17/chinese-segment/"><i class="fas fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" href="#"><i class="fas fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=http://jeremyliu.org/2018/04/17/tensorflow-rnn/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=http://jeremyliu.org/2018/04/17/tensorflow-rnn/&text=RNN 源码解析（tensorflow）"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=http://jeremyliu.org/2018/04/17/tensorflow-rnn/&title=RNN 源码解析（tensorflow）"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=http://jeremyliu.org/2018/04/17/tensorflow-rnn/&is_video=false&description=RNN 源码解析（tensorflow）"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=RNN 源码解析（tensorflow）&body=Check out this article: http://jeremyliu.org/2018/04/17/tensorflow-rnn/"><i class="fas fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=http://jeremyliu.org/2018/04/17/tensorflow-rnn/&title=RNN 源码解析（tensorflow）"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=http://jeremyliu.org/2018/04/17/tensorflow-rnn/&title=RNN 源码解析（tensorflow）"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=http://jeremyliu.org/2018/04/17/tensorflow-rnn/&title=RNN 源码解析（tensorflow）"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=http://jeremyliu.org/2018/04/17/tensorflow-rnn/&title=RNN 源码解析（tensorflow）"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=http://jeremyliu.org/2018/04/17/tensorflow-rnn/&name=RNN 源码解析（tensorflow）&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://news.ycombinator.com/submitlink?u=http://jeremyliu.org/2018/04/17/tensorflow-rnn/&t=RNN 源码解析（tensorflow）"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#rnn-cell的接口声明"><span class="toc-number">1.</span> <span class="toc-text">rnn_cell的接口声明</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#RNNCell类"><span class="toc-number">2.</span> <span class="toc-text">RNNCell类</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#BasicRNNCell类"><span class="toc-number">3.</span> <span class="toc-text">BasicRNNCell类</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#BasicLSTMCell类"><span class="toc-number">4.</span> <span class="toc-text">BasicLSTMCell类</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#LSTMCell类"><span class="toc-number">5.</span> <span class="toc-text">LSTMCell类</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#构建RNN的几种方法"><span class="toc-number">6.</span> <span class="toc-text">构建RNN的几种方法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#tf-nn-static-rnn"><span class="toc-number">7.</span> <span class="toc-text">tf.nn.static_rnn()</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#tf-nn-dynamic-rnn"><span class="toc-number">8.</span> <span class="toc-text">tf.nn.dynamic_rnn()</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#tf-nn-bidirectional-dynamic-rnn"><span class="toc-number">9.</span> <span class="toc-text">tf.nn.bidirectional_dynamic_rnn()</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#tf-nn-raw-rnn"><span class="toc-number">10.</span> <span class="toc-text">tf.nn.raw_rnn()</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结束"><span class="toc-number">11.</span> <span class="toc-text">结束</span></a></li></ol>
+    </div>
+  </span>
+</div>
+
+    
+    <div class="content index py4">
+        
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        RNN 源码解析（tensorflow）
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">LJWH</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2018-04-16T16:00:00.000Z" itemprop="datePublished">2018-04-17</time>
+        
+      
+    </div>
+
+
+      
+
+      
+    <div class="article-tag">
+        <i class="fas fa-tag"></i>
+        <a class="tag-link" href="/tags/RNN/">RNN</a>, <a class="tag-link" href="/tags/Tensorflow/">Tensorflow</a>, <a class="tag-link" href="/tags/源码解析/">源码解析</a>
+    </div>
+
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <p>本文将基于tensorflow r1.5的源码，从组成RNN的细胞开始，到如何构建一个RNN，学习这整个的流程。</p>
+<h2 id="rnn-cell的接口声明"><a href="#rnn-cell的接口声明" class="headerlink" title="rnn_cell的接口声明"></a>rnn_cell的接口声明</h2><ul>
+<li>tensorflow在<a href="https://github.com/tensorflow/tensorflow/tree/r1.5/tensorflow/python/ops/rnn_cell.py" target="_blank" rel="noopener">tensorflow/python/ops/rnn_cell.py</a>中声明了一个RNNCell基类和几个基本的RNN cell类,这些类的实现在<a href="https://github.com/tensorflow/tensorflow/tree/r1.5/tensorflow/python/ops/rnn_cell_impl.py" target="_blank" rel="noopener">tensorflow/python/ops/rnn_cell_impl.py</a>中。接下来，我们具体来看看这些类的实现。</li>
+</ul>
+<h2 id="RNNCell类"><a href="#RNNCell类" class="headerlink" title="RNNCell类"></a>RNNCell类</h2><p>RNNCell类继承了base_layer.Layer类，是RNN cell的一个抽象类的表示。</p>
+<p>__call__()方法会调用父类base_layer.Layer类的__call__()方法,父类base_layer.Layer类的__call__()方法会调用call方法，所以所有继承了RNNCell的类，只需要重写自身的call方法，就可以实现__call__()的调用。</p>
+<ul>
+<li><p>__call__()的输入主要是inputs, state, 输出是outputs, new_sate,通过调用这个方法，实现序列采样的前进。</p>
+</li>
+<li><p>下面介绍几种常见的RNN cell的具体实现。</p>
+</li>
+</ul>
+<h2 id="BasicRNNCell类"><a href="#BasicRNNCell类" class="headerlink" title="BasicRNNCell类"></a>BasicRNNCell类</h2><ul>
+<li><p>BasicRNNCell类是RNNCell类最基本的实现。</p>
+</li>
+<li><p>构造方法中传入参数主要是num_units(神经元个数)。</p>
+</li>
+<li><p>该类的call()方法的具体实现如下：</p>
+</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">call</span><span class="params">(self, inputs, state)</span>:</span></span><br><span class="line">  <span class="string">"""Most basic RNN: output = new_state = act(W * input + U * state + B)."""</span></span><br><span class="line"></span><br><span class="line">  gate_inputs = math_ops.matmul(</span><br><span class="line">      array_ops.concat([inputs, state], <span class="number">1</span>), self._kernel)</span><br><span class="line">  gate_inputs = nn_ops.bias_add(gate_inputs, self._bias)</span><br><span class="line">  output = self._activation(gate_inputs)</span><br><span class="line">  <span class="keyword">return</span> output, output</span><br></pre></td></tr></table></figure>
+<p>通过方法的注释可以直观的看到，每次调用call()方法时，也就是序列采样时，output = new_state = act(W <em> input + U </em> state + B).在计算时，将input和state串联起来一起计算，节省时间。</p>
+<ul>
+<li>这里要注意的是，inputs的shape是(batch_size, seq_length), output和state是同样的, shape为(batch_size, num_units), 参数W和U串联在一起的self._kernel的shape是(seq_length + num_units, num_units).</li>
+</ul>
+<h2 id="BasicLSTMCell类"><a href="#BasicLSTMCell类" class="headerlink" title="BasicLSTMCell类"></a>BasicLSTMCell类</h2><ul>
+<li><p>BasicLSTMCell类是LSTM cell的基本实现。</p>
+</li>
+<li><p>构造方法中传入参数主要是num_units(神经元个数)。</p>
+</li>
+<li><p>该类的call()方法的具体实现如下：</p>
+</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">call</span><span class="params">(self, inputs, state)</span>:</span></span><br><span class="line">  <span class="string">"""Long short-term memory cell (LSTM).</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  Args:</span></span><br><span class="line"><span class="string">    inputs: `2-D` tensor with shape `[batch_size, input_size]`.</span></span><br><span class="line"><span class="string">    state: An `LSTMStateTuple` of state tensors, each shaped</span></span><br><span class="line"><span class="string">      `[batch_size, self.state_size]`, if `state_is_tuple` has been set to</span></span><br><span class="line"><span class="string">      `True`.  Otherwise, a `Tensor` shaped</span></span><br><span class="line"><span class="string">      `[batch_size, 2 * self.state_size]`.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  Returns:</span></span><br><span class="line"><span class="string">    A pair containing the new hidden state, and the new state (either a</span></span><br><span class="line"><span class="string">      `LSTMStateTuple` or a concatenated state, depending on</span></span><br><span class="line"><span class="string">      `state_is_tuple`).</span></span><br><span class="line"><span class="string">  """</span></span><br><span class="line">  sigmoid = math_ops.sigmoid</span><br><span class="line">  one = constant_op.constant(<span class="number">1</span>, dtype=dtypes.int32)</span><br><span class="line">  <span class="comment"># Parameters of gates are concatenated into one multiply for efficiency.</span></span><br><span class="line">  <span class="keyword">if</span> self._state_is_tuple:</span><br><span class="line">    c, h = state</span><br><span class="line">  <span class="keyword">else</span>:</span><br><span class="line">    c, h = array_ops.split(value=state, num_or_size_splits=<span class="number">2</span>, axis=one)</span><br><span class="line"></span><br><span class="line">  gate_inputs = math_ops.matmul(</span><br><span class="line">      array_ops.concat([inputs, h], <span class="number">1</span>), self._kernel)</span><br><span class="line">  gate_inputs = nn_ops.bias_add(gate_inputs, self._bias)</span><br><span class="line"></span><br><span class="line">  <span class="comment"># i = input_gate, j = new_input, f = forget_gate, o = output_gate</span></span><br><span class="line">  i, j, f, o = array_ops.split(</span><br><span class="line">      value=gate_inputs, num_or_size_splits=<span class="number">4</span>, axis=one)</span><br><span class="line"></span><br><span class="line">  forget_bias_tensor = constant_op.constant(self._forget_bias, dtype=f.dtype)</span><br><span class="line">  <span class="comment"># Note that using `add` and `multiply` instead of `+` and `*` gives a</span></span><br><span class="line">  <span class="comment"># performance improvement. So using those at the cost of readability.</span></span><br><span class="line">  add = math_ops.add</span><br><span class="line">  multiply = math_ops.multiply</span><br><span class="line">  new_c = add(multiply(c, sigmoid(add(f, forget_bias_tensor))),</span><br><span class="line">              multiply(sigmoid(i), self._activation(j)))</span><br><span class="line">  new_h = multiply(self._activation(new_c), sigmoid(o))</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> self._state_is_tuple:</span><br><span class="line">    new_state = LSTMStateTuple(new_c, new_h)</span><br><span class="line">  <span class="keyword">else</span>:</span><br><span class="line">    new_state = array_ops.concat([new_c, new_h], <span class="number">1</span>)</span><br><span class="line">  <span class="keyword">return</span> new_h, new_state</span><br></pre></td></tr></table></figure>
+<ul>
+<li><p>可以看到，函数输入中的state是一个tuple, 这是因为LSTM网络比一般的RNN网络多出了一个cell_state.</p>
+</li>
+<li><p>接着计算gate_inputs, 也就是4个门分别的输入，这里是把4个门的输入的参数串联到一个参数矩阵，一次计算得到一个输入矩阵，包含了4个门的分别的不同的输入，然后把矩阵切分开来，得到了i, j, f, o这4个门的输入。</p>
+</li>
+<li><p>根据公式计算c和h，<br>c = forget_gate * c + input_gate * activation(input),<br>h = activation(c) * output_gate.</p>
+</li>
+<li><p>由于BasicLSTMCell不包含投影层，所以output就是h, new_state是(c, h).</p>
+</li>
+</ul>
+<h2 id="LSTMCell类"><a href="#LSTMCell类" class="headerlink" title="LSTMCell类"></a>LSTMCell类</h2><ul>
+<li><p>与BasicLSTMCell相比，LSTMCell类提供了可选的peep-hole链接、cell clipping以及投影层。</p>
+</li>
+<li><p>该类的call()方法的具体实现如下：</p>
+</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">call</span><span class="params">(self, inputs, state)</span>:</span></span><br><span class="line">  <span class="string">"""Run one step of LSTM.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  Args:</span></span><br><span class="line"><span class="string">    inputs: input Tensor, 2D, `[batch, num_units].</span></span><br><span class="line"><span class="string">    state: if `state_is_tuple` is False, this must be a state Tensor,</span></span><br><span class="line"><span class="string">      `2-D, [batch, state_size]`.  If `state_is_tuple` is True, this must be a</span></span><br><span class="line"><span class="string">      tuple of state Tensors, both `2-D`, with column sizes `c_state` and</span></span><br><span class="line"><span class="string">      `m_state`.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  Returns:</span></span><br><span class="line"><span class="string">    A tuple containing:</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    - A `2-D, [batch, output_dim]`, Tensor representing the output of the</span></span><br><span class="line"><span class="string">      LSTM after reading `inputs` when previous state was `state`.</span></span><br><span class="line"><span class="string">      Here output_dim is:</span></span><br><span class="line"><span class="string">         num_proj if num_proj was set,</span></span><br><span class="line"><span class="string">         num_units otherwise.</span></span><br><span class="line"><span class="string">    - Tensor(s) representing the new state of LSTM after reading `inputs` when</span></span><br><span class="line"><span class="string">      the previous state was `state`.  Same type and shape(s) as `state`.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">  Raises:</span></span><br><span class="line"><span class="string">    ValueError: If input size cannot be inferred from inputs via</span></span><br><span class="line"><span class="string">      static shape inference.</span></span><br><span class="line"><span class="string">  """</span></span><br><span class="line">  num_proj = self._num_units <span class="keyword">if</span> self._num_proj <span class="keyword">is</span> <span class="keyword">None</span> <span class="keyword">else</span> self._num_proj</span><br><span class="line">  sigmoid = math_ops.sigmoid</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> self._state_is_tuple:</span><br><span class="line">    (c_prev, m_prev) = state</span><br><span class="line">  <span class="keyword">else</span>:</span><br><span class="line">    c_prev = array_ops.slice(state, [<span class="number">0</span>, <span class="number">0</span>], [<span class="number">-1</span>, self._num_units])</span><br><span class="line">    m_prev = array_ops.slice(state, [<span class="number">0</span>, self._num_units], [<span class="number">-1</span>, num_proj])</span><br><span class="line"></span><br><span class="line">  input_size = inputs.get_shape().with_rank(<span class="number">2</span>)[<span class="number">1</span>]</span><br><span class="line">  <span class="keyword">if</span> input_size.value <span class="keyword">is</span> <span class="keyword">None</span>:</span><br><span class="line">    <span class="keyword">raise</span> ValueError(<span class="string">"Could not infer input size from inputs.get_shape()[-1]"</span>)</span><br><span class="line"></span><br><span class="line">  <span class="comment"># i = input_gate, j = new_input, f = forget_gate, o = output_gate</span></span><br><span class="line">  lstm_matrix = math_ops.matmul(</span><br><span class="line">      array_ops.concat([inputs, m_prev], <span class="number">1</span>), self._kernel)</span><br><span class="line">  lstm_matrix = nn_ops.bias_add(lstm_matrix, self._bias)</span><br><span class="line"></span><br><span class="line">  i, j, f, o = array_ops.split(</span><br><span class="line">      value=lstm_matrix, num_or_size_splits=<span class="number">4</span>, axis=<span class="number">1</span>)</span><br><span class="line">  <span class="comment"># Diagonal connections</span></span><br><span class="line">  <span class="keyword">if</span> self._use_peepholes:</span><br><span class="line">    c = (sigmoid(f + self._forget_bias + self._w_f_diag * c_prev) * c_prev +</span><br><span class="line">         sigmoid(i + self._w_i_diag * c_prev) * self._activation(j))</span><br><span class="line">  <span class="keyword">else</span>:</span><br><span class="line">    c = (sigmoid(f + self._forget_bias) * c_prev + sigmoid(i) *</span><br><span class="line">         self._activation(j))</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> self._cell_clip <span class="keyword">is</span> <span class="keyword">not</span> <span class="keyword">None</span>:</span><br><span class="line">    <span class="comment"># pylint: disable=invalid-unary-operand-type</span></span><br><span class="line">    c = clip_ops.clip_by_value(c, -self._cell_clip, self._cell_clip)</span><br><span class="line">    <span class="comment"># pylint: enable=invalid-unary-operand-type</span></span><br><span class="line">  <span class="keyword">if</span> self._use_peepholes:</span><br><span class="line">    m = sigmoid(o + self._w_o_diag * c) * self._activation(c)</span><br><span class="line">  <span class="keyword">else</span>:</span><br><span class="line">    m = sigmoid(o) * self._activation(c)</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> self._num_proj <span class="keyword">is</span> <span class="keyword">not</span> <span class="keyword">None</span>:</span><br><span class="line">    m = math_ops.matmul(m, self._proj_kernel)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> self._proj_clip <span class="keyword">is</span> <span class="keyword">not</span> <span class="keyword">None</span>:</span><br><span class="line">      <span class="comment"># pylint: disable=invalid-unary-operand-type</span></span><br><span class="line">      m = clip_ops.clip_by_value(m, -self._proj_clip, self._proj_clip)</span><br><span class="line">      <span class="comment"># pylint: enable=invalid-unary-operand-type</span></span><br><span class="line"></span><br><span class="line">  new_state = (LSTMStateTuple(c, m) <span class="keyword">if</span> self._state_is_tuple <span class="keyword">else</span></span><br><span class="line">               array_ops.concat([c, m], <span class="number">1</span>))</span><br><span class="line">  <span class="keyword">return</span> m, new_state</span><br></pre></td></tr></table></figure>
+<ul>
+<li><p>和BasicLSTMCell类似，这里同样是获取state，其中包含了c_prev和m_prev, 分别表示了上一步中的cell和hidden的状态。</p>
+</li>
+<li><p>接着计算4个门的输入，和BasicLSTMCell类似，不同点是，在这个地方，为4个门的输入张量加上了一个bias。</p>
+</li>
+<li><p>下面是计算c和h，如果配置了使用peepholes connections，那么会在计算forget, input和output这三个门的输入上，分别串联前一个时刻的c. 如果配置了num_proj，那么会将m（hidden state）投影到配置的num_proj的维度上。</p>
+</li>
+</ul>
+<h2 id="构建RNN的几种方法"><a href="#构建RNN的几种方法" class="headerlink" title="构建RNN的几种方法"></a>构建RNN的几种方法</h2><ul>
+<li><p>现在我们已经对RNN的cell有所了解了，那么该如何创建一个完整的RNN呢？</p>
+</li>
+<li><p>我们已经知道，对RNN的cell的call()函数的循环调用，可以实现序列的采样，那么最直观的想法就是我们构建一个循环，不停的调用call()函数, 这样就得到了一个RNN。基本思想如下：</p>
+</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">state = cell.zero_state(...)</span><br><span class="line">outputs = []</span><br><span class="line"><span class="keyword">for</span> input_ <span class="keyword">in</span> inputs:</span><br><span class="line">  output, state = cell(input_, state)</span><br><span class="line">  outputs.append(output)</span><br><span class="line"><span class="keyword">return</span> (outputs, state)</span><br></pre></td></tr></table></figure>
+<ul>
+<li><p>在tensorflow中，已经有一些帮助方法，可以帮我们快速的构建一个RNN，比如：</p>
+</li>
+<li><p>tf.nn.static_rnn()</p>
+</li>
+<li><p>tf.nn.dynamic_rnn()</p>
+</li>
+<li><p>tf.nn.bidirectional_dynamic_rnn()</p>
+</li>
+<li><p>tf.nn.raw_rnn()</p>
+</li>
+</ul>
+<p>下面我们来一一学习这些帮助方法。</p>
+<h2 id="tf-nn-static-rnn"><a href="#tf-nn-static-rnn" class="headerlink" title="tf.nn.static_rnn()"></a>tf.nn.static_rnn()</h2><p>tf.nn.static_rnn()的主要输入参数有5个：<br>cell是RNN指定的细胞；</p>
+<p>inputs是输入，类型必须是collections.Sequence(除了string)， shape为(B, T, D)， 如果只有一个序列，那么可以为1维，即(D)；</p>
+<p>initial_state是给定的RNN的其实状态，如不指定，则以RNNCell.zero_state(…)来初始化，且必须要指定dtype；</p>
+<p>sequence_length是序列的长度，如果指定了序列的长度，那么会启动动态计算，即在一个batch内，超过sequence_length的部分将不予以计算。</p>
+<p>函数内部，首先取出inputs中第一个输入，然后检查所有的batch的size是否一致，最后得到batch_size。</p>
+<h2 id="tf-nn-dynamic-rnn"><a href="#tf-nn-dynamic-rnn" class="headerlink" title="tf.nn.dynamic_rnn()"></a>tf.nn.dynamic_rnn()</h2><p>tf.nn.dynamic_rnn()与tf.nn.static_rnn()有些区别，首先在图的定义上，dynamic_rnn()构造的是一个可以循环执行的图，序列的长度表示为循环的次数；而static_rnn()构造的是一个RNN的展开图，所以对于不同的batch，dynamic_rnn()可以允许不同的batch内有不同的序列长度，而statci_rnn()由于展开图的长度就是序列的长度，所以在不同的batch内必须要有相同的长度。后续会写一篇文章来详细的说明tf.nn.static_rnn()和tf.nn.dynamic_rnn()的异同及性能。</p>
+<p>一般推荐使用dynamic_rnn()取代static_rnn().</p>
+<h2 id="tf-nn-bidirectional-dynamic-rnn"><a href="#tf-nn-bidirectional-dynamic-rnn" class="headerlink" title="tf.nn.bidirectional_dynamic_rnn()"></a>tf.nn.bidirectional_dynamic_rnn()</h2><p>bidirectional_dynamic_rnn()是dynamic_rnn()的双向版本。</p>
+<p>为什么要有双向的RNN呢？本人认为这是RNN的结构造成的，RNN与一般的全连接神经网络的一个主要的不同是，RNN可以在不同的输入中共享参数，但是RNN是序列结构，所以只能是后面的输入共享前面的输入的信息，前面的输入不能得到后面的信息，所以的在实际的应用中（如machine translation)，序列的采样仅仅从左到右或者从右到左都是会丢失一些信息，这时候就需要双向的RNN，tensorflow提供了这个帮助方法tf.nn.bidirectional_dynamic_rnn()。</p>
+<p>序列前向输入RNN的结果为(output_fw, output_state_fw)，序列后向输入RNN的结果为(output_fw, output_state_fw), 总的输出为((output_fw, output_state_fw), (output_fw, output_state_fw)).</p>
+<h2 id="tf-nn-raw-rnn"><a href="#tf-nn-raw-rnn" class="headerlink" title="tf.nn.raw_rnn()"></a>tf.nn.raw_rnn()</h2><p>tf.nn.raw_rnn()是tf.nn.dynamic_rnn()更底层的函数。dynamic_rnn()有一些限制，tf.nn.raw_rnn()可以提供更底层的控制，以便于实现一些特殊的需求，如seq2seq模型的解码等等。</p>
+<p>函数的输入中，比较重要的是loop_fn, loop_fn也是一个函数，输入为(time, cell_output, cell_state, loop_state), 输出为(finished, next_input, next_cell_state, emit_output, next_loop_state).</p>
+<p>loop_fn会在循环每一次结束之后调用，使我们更多的控制循环的进行，如更改循环的输出，下一个循环的输入，细胞的状态。</p>
+<h2 id="结束"><a href="#结束" class="headerlink" title="结束"></a>结束</h2><p>至此，你已经大体的了解了tensorflow中RNN的具体实现。</p>
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="/">主页</a></li>
+         
+          <li><a href="/archives/">博客</a></li>
+         
+          <li><a href="/about/">关于</a></li>
+         
+          <li><a href="http://github.com/ljwh">GitHub</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#rnn-cell的接口声明"><span class="toc-number">1.</span> <span class="toc-text">rnn_cell的接口声明</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#RNNCell类"><span class="toc-number">2.</span> <span class="toc-text">RNNCell类</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#BasicRNNCell类"><span class="toc-number">3.</span> <span class="toc-text">BasicRNNCell类</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#BasicLSTMCell类"><span class="toc-number">4.</span> <span class="toc-text">BasicLSTMCell类</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#LSTMCell类"><span class="toc-number">5.</span> <span class="toc-text">LSTMCell类</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#构建RNN的几种方法"><span class="toc-number">6.</span> <span class="toc-text">构建RNN的几种方法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#tf-nn-static-rnn"><span class="toc-number">7.</span> <span class="toc-text">tf.nn.static_rnn()</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#tf-nn-dynamic-rnn"><span class="toc-number">8.</span> <span class="toc-text">tf.nn.dynamic_rnn()</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#tf-nn-bidirectional-dynamic-rnn"><span class="toc-number">9.</span> <span class="toc-text">tf.nn.bidirectional_dynamic_rnn()</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#tf-nn-raw-rnn"><span class="toc-number">10.</span> <span class="toc-text">tf.nn.raw_rnn()</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结束"><span class="toc-number">11.</span> <span class="toc-text">结束</span></a></li></ol>
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=http://jeremyliu.org/2018/04/17/tensorflow-rnn/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=http://jeremyliu.org/2018/04/17/tensorflow-rnn/&text=RNN 源码解析（tensorflow）"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=http://jeremyliu.org/2018/04/17/tensorflow-rnn/&title=RNN 源码解析（tensorflow）"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=http://jeremyliu.org/2018/04/17/tensorflow-rnn/&is_video=false&description=RNN 源码解析（tensorflow）"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=RNN 源码解析（tensorflow）&body=Check out this article: http://jeremyliu.org/2018/04/17/tensorflow-rnn/"><i class="fas fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=http://jeremyliu.org/2018/04/17/tensorflow-rnn/&title=RNN 源码解析（tensorflow）"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=http://jeremyliu.org/2018/04/17/tensorflow-rnn/&title=RNN 源码解析（tensorflow）"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=http://jeremyliu.org/2018/04/17/tensorflow-rnn/&title=RNN 源码解析（tensorflow）"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=http://jeremyliu.org/2018/04/17/tensorflow-rnn/&title=RNN 源码解析（tensorflow）"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=http://jeremyliu.org/2018/04/17/tensorflow-rnn/&name=RNN 源码解析（tensorflow）&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://news.ycombinator.com/submitlink?u=http://jeremyliu.org/2018/04/17/tensorflow-rnn/&t=RNN 源码解析（tensorflow）"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fas fa-bars fa-lg" aria-hidden="true"></i> Menu</a>
+        <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fas fa-list fa-lg" aria-hidden="true"></i> TOC</a>
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fas fa-share-alt fa-lg" aria-hidden="true"></i> Share</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy; 2020 liujian
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+         
+          <li><a href="/">主页</a></li>
+         
+          <li><a href="/archives/">博客</a></li>
+         
+          <li><a href="/about/">关于</a></li>
+         
+          <li><a href="http://github.com/ljwh">GitHub</a></li>
+        
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+<link rel="stylesheet" href="/lib/justified-gallery/css/justifiedGallery.min.css">
+
+    <!-- jquery -->
+<script src="/lib/jquery/jquery.min.js"></script>
+<script src="/lib/justified-gallery/js/jquery.justifiedGallery.min.js"></script>
+<!-- clipboard -->
+
+  <script src="/lib/clipboard/clipboard.min.js"></script>
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"Copy to clipboard!\">";
+    btn += '<i class="far fa-clone"></i>';
+    btn += '</span>'; 
+    // mount it!
+    $(".highlight .code pre").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      target: function(trigger) {
+        return trigger.nextElementSibling;
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "Copied!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+<script src="/js/main.js"></script>
+<!-- search -->
+
+<!-- Google Analytics -->
+
+    <script type="text/javascript">
+        (function(i,s,o,g,r,a,m) {i['GoogleAnalyticsObject']=r;i[r]=i[r]||function() {
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        ga('create', 'UA-119131730-1', 'auto');
+        ga('send', 'pageview');
+    </script>
+
+<!-- Baidu Analytics -->
+
+<!-- Disqus Comments -->
+
+
+</body>
+</html>
