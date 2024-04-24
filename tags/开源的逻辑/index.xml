@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
-    <title>梯度下降</title>
-    <link>https://ljwh.github.io/posts/</link>
-    <description>Recent content on 梯度下降</description>
+    <title>开源的逻辑 on 梯度下降</title>
+    <link>https://ljwh.github.io/tags/%E5%BC%80%E6%BA%90%E7%9A%84%E9%80%BB%E8%BE%91/</link>
+    <description>Recent content in 开源的逻辑 on 梯度下降</description>
     <image>
       <title>梯度下降</title>
       <url>https://ljwh.github.io/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</url>
@@ -11,7 +11,7 @@
     </image>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Tue, 16 Apr 2024 00:00:00 +0000</lastBuildDate><atom:link href="https://ljwh.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Tue, 16 Apr 2024 00:00:00 +0000</lastBuildDate><atom:link href="https://ljwh.github.io/tags/%E5%BC%80%E6%BA%90%E7%9A%84%E9%80%BB%E8%BE%91/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>「开源的逻辑」 1. 开源的核心价值</title>
       <link>https://ljwh.github.io/posts/opensource_01/</link>
@@ -19,15 +19,6 @@
       
       <guid>https://ljwh.github.io/posts/opensource_01/</guid>
       <description>开源的本质 开源项目是如今互联网及相关行业高速发展的基础，我们每时每刻的生活都有开源项目的影子，比如很多人手机中的安卓系统、访问的每一个App</description>
-    </item>
-    
-    <item>
-      <title>梯度下降优化算法</title>
-      <link>https://ljwh.github.io/posts/gd/</link>
-      <pubDate>Mon, 11 Sep 2023 20:25:05 +0800</pubDate>
-      
-      <guid>https://ljwh.github.io/posts/gd/</guid>
-      <description>梯度 梯度是一个数学概念，梯度函数表示的是多元可微函数的向量域函数，在某一点的梯度是该多元可微函数在该点上的偏导数为分量的向量。 我们用导数衡量</description>
     </item>
     
   </channel>
