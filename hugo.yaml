@@ -88,7 +88,7 @@ params:
   # home-info mode
   homeInfoParams:
     Title: "梯度下降 \U0001F44B"
-    Content: 欢迎来到我的博客，我是Joe，在这里会分享一些自己的想法，希望能对大家有一点点启发。
+    Content: 欢迎来到我的博客，在这里我会分享一些自己的想法，希望能对大家有一点点启发。
 
   socialIcons:
     - name: github
