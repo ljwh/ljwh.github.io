@@ -9,17 +9,17 @@
       <url>https://ljwh.github.io/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</url>
       <link>https://ljwh.github.io/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</link>
     </image>
-    <generator>Hugo -- gohugo.io</generator>
+    <generator>Hugo -- 0.145.0</generator>
     <language>en-us</language>
-    <lastBuildDate>Tue, 16 Apr 2024 00:00:00 +0000</lastBuildDate><atom:link href="https://ljwh.github.io/tags/%E5%BC%80%E6%BA%90%E7%9A%84%E9%80%BB%E8%BE%91/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Tue, 16 Apr 2024 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://ljwh.github.io/tags/%E5%BC%80%E6%BA%90%E7%9A%84%E9%80%BB%E8%BE%91/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>「开源的逻辑」 1. 开源的核心价值</title>
       <link>https://ljwh.github.io/posts/opensource_01/</link>
       <pubDate>Tue, 16 Apr 2024 00:00:00 +0000</pubDate>
-      
       <guid>https://ljwh.github.io/posts/opensource_01/</guid>
-      <description>开源的本质 开源项目是如今互联网及相关行业高速发展的基础，我们每时每刻的生活都有开源项目的影子，比如很多人手机中的安卓系统、访问的每一个App</description>
+      <description>&lt;h2 id=&#34;开源的本质&#34;&gt;开源的本质&lt;/h2&gt;
+&lt;p&gt;开源项目是如今互联网及相关行业高速发展的基础，我们每时每刻的生活都有开源项目的影子，比如很多人手机中的安卓系统、访问的每一个App背后服务器中的Linux系统，在学校学习的Python等编程语言，编写网站服务和处理数据用到的框架等，这些项目大都是开源的。&lt;/p&gt;</description>
     </item>
-    
   </channel>
 </rss>

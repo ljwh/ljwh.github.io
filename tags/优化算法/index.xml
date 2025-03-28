@@ -9,17 +9,18 @@
       <url>https://ljwh.github.io/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</url>
       <link>https://ljwh.github.io/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</link>
     </image>
-    <generator>Hugo -- gohugo.io</generator>
+    <generator>Hugo -- 0.145.0</generator>
     <language>en-us</language>
-    <lastBuildDate>Mon, 11 Sep 2023 20:25:05 +0800</lastBuildDate><atom:link href="https://ljwh.github.io/tags/%E4%BC%98%E5%8C%96%E7%AE%97%E6%B3%95/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Mon, 11 Sep 2023 20:25:05 +0800</lastBuildDate>
+    <atom:link href="https://ljwh.github.io/tags/%E4%BC%98%E5%8C%96%E7%AE%97%E6%B3%95/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>梯度下降优化算法</title>
       <link>https://ljwh.github.io/posts/gd/</link>
       <pubDate>Mon, 11 Sep 2023 20:25:05 +0800</pubDate>
-      
       <guid>https://ljwh.github.io/posts/gd/</guid>
-      <description>梯度 梯度是一个数学概念，梯度函数表示的是多元可微函数的向量域函数，在某一点的梯度是该多元可微函数在该点上的偏导数为分量的向量。 我们用导数衡量</description>
+      <description>&lt;h2 id=&#34;梯度&#34;&gt;梯度&lt;/h2&gt;
+&lt;p&gt;梯度是一个数学概念，梯度函数表示的是多元可微函数的向量域函数，在某一点的梯度是该多元可微函数在该点上的偏导数为分量的向量。&lt;/p&gt;
+&lt;p&gt;我们用导数衡量一元函数的变化情况，类似的，&lt;strong&gt;梯度是导数在多元函数中的推广&lt;/strong&gt;，就像一元函数的导数表示这个函数图形的切线的斜率，如果多元函数在该点上的梯度不是零向量，则它的方向是这个函数在该点上最大增长的方向、而它的量是在这个方向上的增长率。&lt;/p&gt;</description>
     </item>
-    
   </channel>
 </rss>
