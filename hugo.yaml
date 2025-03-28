@@ -74,7 +74,7 @@ params:
   profileMode:
     enabled: false # needs to be explicitly set
     title: 梯度下降
-    subtitle: "欢迎来到我的博客，我是Joe，在这里会分享一些自己的想法，希望能对大家有一点点启发。"
+    subtitle: "欢迎来到我的博客，在这里我会分享一些自己的想法，希望能对大家有一点点启发。"
     imageUrl: "/apple-touch-icon.png"
     imageWidth: 120
     imageHeight: 120
